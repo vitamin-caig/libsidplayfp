@@ -29,14 +29,12 @@
 
 #include <vector>
 
-#include "event.h"
-
 class sidemu;
 
 /**
 * This class implements the mixer.
 */
-class Mixer : private Event
+class Mixer
 {
 private:
     typedef short (*mixer_func_t)(const int_least32_t* s);
@@ -46,11 +44,6 @@ public:
     static const int_least32_t VOLUME_MAX = 1024;
 
 private:
-    /**
-    * Event context.
-    */
-    EventContext &event_context;
-
     std::vector<sidemu*> m_chips;
     std::vector<short*> m_buffers;
 
@@ -93,9 +86,7 @@ public:
      *
      * @param context event context
      */
-    Mixer(EventContext *context) :
-        Event("Mixer"),
-        event_context(*context),
+    Mixer() :
         oldRandomValue(0),
         m_sampleCount(0),
         m_stereo(false)
@@ -104,14 +95,19 @@ public:
     }
 
     /**
-     * Timer ticking event.
+     * Do the mixing.
      */
-    void event();
+    void doMix();
 
     /**
-     * Schedule mixer event.
+     * This clocks the SIDs to the present moment, if they aren't already.
      */
-    void reset();
+    void clockChips();
+
+    /**
+     * Reset sidemu buffer position discarding produced samples.
+     */
+    void resetBufs();
 
     /**
      * Prepare for mixing cycle.

@@ -343,10 +343,6 @@ public:
     void reset();
 
     const char *credits() const { return credit; }
-
-    int getCyclesPerLine() const { return cyclesPerLine; }
-
-    int getRasterLines() const { return maxRasters; }
 };
 
 // Template specializations
