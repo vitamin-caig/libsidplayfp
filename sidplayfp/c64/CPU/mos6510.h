@@ -34,36 +34,37 @@
 #endif
 
 /**
-* Cycle-exact 6502/6510 emulation core.
-*
-* Code is based on work by Simon A. White <sidplay2@yahoo.com>.
-* Original Java port by Ken Händel. Later on, it has been hacked to
-* improve compatibility with Lorenz suite on VICE's test suite.
-*
-* @author alankila
-*/
+ * Cycle-exact 6502/6510 emulation core.
+ *
+ * Code is based on work by Simon A. White <sidplay2@yahoo.com>.
+ * Original Java port by Ken Händel. Later on, it has been hacked to
+ * improve compatibility with Lorenz suite on VICE's test suite.
+ *
+ * @author alankila
+ */
 class MOS6510
 {
     friend class MOS6510Debug;
+
 private:
     static const char *credit;
 
 private:
     /**
-    * IRQ/NMI magic limit values.
-    * Need to be larger than about 0x103 << 3,
-    * but can't be min/max for Integer type.
-    */
+     * IRQ/NMI magic limit values.
+     * Need to be larger than about 0x103 << 3,
+     * but can't be min/max for Integer type.
+     */
     static const int MAX = 65536;
 
-    /** Stack page location */
+    /// Stack page location
     static const uint8_t SP_PAGE = 0x01;
 
 public:
-    /** Status register interrupt bit. */
+    /// Status register interrupt bit.
     static const int SR_INTERRUPT = 2;
 
-protected:
+private:
     struct ProcessorCycle
     {
         void (*func)(MOS6510&);
@@ -73,31 +74,32 @@ protected:
             nosteal(false) {}
     };
 
-protected:
-    /** Our event context copy. */
+private:
+    /// Our event context copy.
     EventContext &eventContext;
 
-    /** Our memory manager copy */
+    /// Our memory manager copy
     MMU &memory;
 
-    /** Current instruction and subcycle within instruction */
+    /// Current instruction and subcycle within instruction
     int cycleCount;
 
-     /** When IRQ was triggered. -MAX means "during some previous instruction", MAX means "no IRQ" */
+    /// When IRQ was triggered. -MAX means "during some previous instruction", MAX means "no IRQ"
     int interruptCycle;
 
-    /** IRQ asserted on CPU */
+    /// IRQ asserted on CPU
     bool irqAssertedOnPin;
 
-    /** NMI requested? */
+    /// NMI requested?
     bool nmiFlag;
 
-    /** RST requested? */
+    /// RST requested?
     bool rstFlag;
 
-    /** RDY pin state (stop CPU on read) */
+    /// RDY pin state (stop CPU on read)
     bool rdy;
 
+    // Flags
     bool flagN;
     bool flagC;
     bool flagD;
@@ -106,7 +108,7 @@ protected:
     bool flagI;
     bool flagB;
 
-    /* Data regarding current instruction */
+    // Data regarding current instruction
     uint_least16_t Register_ProgramCounter;
     uint_least16_t Cycle_EffectiveAddress;
     uint_least16_t Cycle_HighByteWrongEffectiveAddress;
@@ -119,7 +121,7 @@ protected:
     uint8_t Register_Y;
 
 #ifdef DEBUG
-    /* Debug info */
+    // Debug info
     uint_least16_t instrStartPC;
     uint_least16_t instrOperand;
 
@@ -128,7 +130,7 @@ protected:
     bool dodump;
 #endif
 
-    /** Table of CPU opcode implementations */
+    /// Table of CPU opcode implementations
     struct ProcessorCycle  instrTable[0x101 << 3];
 
 protected:
