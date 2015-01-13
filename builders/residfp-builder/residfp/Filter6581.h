@@ -36,47 +36,40 @@ class Integrator;
 /**
  * Filter based on Dag Lem's 6581 filter from reSID 1.0 prerelease. See original
  * source for discussion about theory of operation.
- *
- * Java port by Antti S. Lankila
- *
- * @author Ken Händel
- * @author Dag Lem
- * @author Antti Lankila
- * @author Leandro Nini
  */
 class Filter6581 : public Filter
 {
 private:
-    /** Filter highpass state. */
+    /// Filter highpass state.
     int Vhp;
 
-    /** Filter bandpass state. */
+    /// Filter bandpass state.
     int Vbp;
 
-    /** Filter lowpass state. */
+    /// Filter lowpass state.
     int Vlp;
 
-    /** Filter external input. */
+    /// Filter external input.
     int ve;
 
-    const int voiceScaleS14, voiceDC, vo_T16;
+    const int voiceScaleS14, voiceDC;
 
-    /** Current volume amplifier setting. */
+    /// Current volume amplifier setting.
     unsigned short* currentGain;
 
-    /** Current filter/voice mixer setting. */
+    /// Current filter/voice mixer setting.
     unsigned short* currentMixer;
 
-    /** Filter input summer setting. */
+    /// Filter input summer setting.
     unsigned short* currentSummer;
 
-    /** Filter resonance value. */
+    /// Filter resonance value.
     unsigned short* currentResonance;
 
-    /** VCR + associated capacitor connected to highpass output. */
+    /// VCR + associated capacitor connected to highpass output.
     Integrator* hpIntegrator;
 
-    /** VCR + associated capacitor connected to lowpass output. */
+    /// VCR + associated capacitor connected to lowpass output.
     Integrator* bpIntegrator;
 
     const unsigned int* f0_dac;
@@ -93,7 +86,6 @@ public:
         ve(0),
         voiceScaleS14(FilterModelConfig::getInstance()->getVoiceScaleS14()),
         voiceDC(FilterModelConfig::getInstance()->getVoiceDC()),
-        vo_T16(FilterModelConfig::getInstance()->getVO_T16()),
         currentGain(0),
         currentMixer(0),
         currentSummer(0),
@@ -115,15 +107,14 @@ public:
     void input(int sample) { ve = (sample * voiceScaleS14 * 3 >> 10) + mixer[0][0]; }
 
     /**
-     * Switch to new distortion curve.
+     * Set filter cutoff frequency.
      */
     void updatedCenterFrequency();
 
     /**
-     * Resonance tuned by ear, based on a few observations:
+     * Set filter resonance.
      *
-     * - there's a small notch even in allpass mode - size of resonance hump is
-     * about 8 dB
+     * In the MOS 6581, 1/Q is controlled linearly by res.
      */
     void updatedResonance() { currentResonance = gain[~res & 0xf]; }
 
@@ -133,7 +124,7 @@ public:
     /**
      * Set filter curve type based on single parameter.
      *
-     * @param curvePosition 0 .. 1, where 0 sets center frequency high ("light") and 1 sets it low ("dark")
+     * @param curvePosition 0 .. 1, where 0 sets center frequency high ("light") and 1 sets it low ("dark"), default is 0.5
      */
     void setFilterCurve(double curvePosition);
 };
@@ -176,8 +167,8 @@ int Filter6581::clock(int voice1, int voice2, int voice3)
 
     const int oldVhp = Vhp;
     Vhp = currentSummer[currentResonance[Vbp] + Vlp + Vi];
-    Vlp = bpIntegrator->solve(Vbp + vo_T16) - vo_T16;
-    Vbp = hpIntegrator->solve(oldVhp + vo_T16) - vo_T16;
+    Vlp = bpIntegrator->solve(Vbp);
+    Vbp = hpIntegrator->solve(oldVhp);
 
     if (lp)
     {
