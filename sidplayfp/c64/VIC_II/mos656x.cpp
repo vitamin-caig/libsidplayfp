@@ -172,7 +172,7 @@ void MOS656X::write(uint_least8_t addr, uint8_t data)
         uint8_t mask = 1;
         for (unsigned int i=0; i<8; i++, mask<<=1)
         {
-            if ((sprite_enable & mask) && !(sprite_y_expansion & mask))
+            if ((data & mask) && !(sprite_y_expansion & mask))
             {
                 if (lineCycle == 14)
                 {
@@ -306,7 +306,13 @@ event_clock_t MOS656X::clockPAL()
         break;
 
     case 12:
+        delay = 3;
+        break;
+
     case 13:
+        delay = 2;
+        break;
+
     case 14:
         break;
 
@@ -324,10 +330,6 @@ event_clock_t MOS656X::clockPAL()
     case 55:
         checkSpriteDmaExp();
         startDma<0>();
-
-        // No sprites before next compulsory cycle
-        if (!(sprite_dma & 0x1f))
-            delay = 8;
         break;
 
     case 56:
@@ -336,6 +338,10 @@ event_clock_t MOS656X::clockPAL()
 
     case 57:
         checkSpriteDisplay();
+
+        // No sprites before next compulsory cycle
+        if (!(sprite_dma & 0x1f))
+            delay = 6;
         break;
 
     case 58:
@@ -432,7 +438,13 @@ event_clock_t MOS656X::clockNTSC()
         break;
 
     case 12:
+        delay = 3;
+        break;
+
     case 13:
+        delay = 2;
+        break;
+
     case 14:
         break;
 
@@ -450,10 +462,6 @@ event_clock_t MOS656X::clockNTSC()
     case 56:
         checkSpriteDma();
         startDma<0>();
-
-        // No sprites before next compulsory cycle
-        if (!(sprite_dma & 0x1f))
-            delay = 9;
         break;
 
     case 57:
@@ -462,6 +470,10 @@ event_clock_t MOS656X::clockNTSC()
 
     case 58:
         checkSpriteDisplay();
+
+        // No sprites before next compulsory cycle
+        if (!(sprite_dma & 0x1f))
+            delay = 7;
         break;
 
     case 59:
@@ -561,7 +573,13 @@ event_clock_t MOS656X::clockOldNTSC()
         break;
 
     case 12:
+        delay = 3;
+        break;
+
     case 13:
+        delay = 2;
+        break;
+
     case 14:
         break;
 
@@ -579,17 +597,13 @@ event_clock_t MOS656X::clockOldNTSC()
     case 56:
         checkSpriteDma();
         startDma<0>();
-
-        // No sprites before next compulsory cycle
-        if (!(sprite_dma & 0x1f))
-            delay = 8;
         break;
 
     case 57:
         checkSpriteDisplay();
         startDma<1>();
 
-        delay = 2;
+        delay = (!(sprite_dma & 0x1f)) ? 7 : 2;
         break;
 
     case 58:
