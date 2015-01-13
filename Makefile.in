@@ -208,10 +208,12 @@ builders_residfp_builder_libsidplayfp_residfp_la_OBJECTS = $(am_builders_residfp
 builders_residfp_builder_residfp_libresidfp_la_LIBADD =
 am_builders_residfp_builder_residfp_libresidfp_la_OBJECTS =  \
 	builders/residfp-builder/residfp/Dac.lo \
+	builders/residfp-builder/residfp/Integrator.lo \
 	builders/residfp-builder/residfp/EnvelopeGenerator.lo \
 	builders/residfp-builder/residfp/ExternalFilter.lo \
 	builders/residfp-builder/residfp/FilterModelConfig.lo \
 	builders/residfp-builder/residfp/Filter.lo \
+	builders/residfp-builder/residfp/Filter8580.lo \
 	builders/residfp-builder/residfp/Filter6581.lo \
 	builders/residfp-builder/residfp/OpAmp.lo \
 	builders/residfp-builder/residfp/SID.lo \
@@ -673,6 +675,7 @@ builders_residfp_builder_residfp_libresidfp_la_SOURCES = \
 builders/residfp-builder/residfp/array.h \
 builders/residfp-builder/residfp/Dac.cpp \
 builders/residfp-builder/residfp/Dac.h \
+builders/residfp-builder/residfp/Integrator.cpp \
 builders/residfp-builder/residfp/Integrator.h \
 builders/residfp-builder/residfp/EnvelopeGenerator.cpp \
 builders/residfp-builder/residfp/EnvelopeGenerator.h \
@@ -682,6 +685,7 @@ builders/residfp-builder/residfp/FilterModelConfig.cpp \
 builders/residfp-builder/residfp/FilterModelConfig.h \
 builders/residfp-builder/residfp/Filter.cpp \
 builders/residfp-builder/residfp/Filter.h \
+builders/residfp-builder/residfp/Filter8580.cpp \
 builders/residfp-builder/residfp/Filter8580.h \
 builders/residfp-builder/residfp/Filter6581.cpp \
 builders/residfp-builder/residfp/Filter6581.h \
@@ -702,7 +706,6 @@ builders/residfp-builder/residfp/resample/ZeroOrderResampler.h \
 builders/residfp-builder/residfp/resample/SincResampler.cpp \
 builders/residfp-builder/residfp/resample/SincResampler.h \
 builders/residfp-builder/residfp/resample/TwoPassSincResampler.h \
-builders/residfp-builder/residfp/residfp-config.h \
 builders/residfp-builder/residfp/version.cc
 
 
@@ -1010,6 +1013,9 @@ builders/residfp-builder/residfp/$(DEPDIR)/$(am__dirstamp):
 builders/residfp-builder/residfp/Dac.lo:  \
 	builders/residfp-builder/residfp/$(am__dirstamp) \
 	builders/residfp-builder/residfp/$(DEPDIR)/$(am__dirstamp)
+builders/residfp-builder/residfp/Integrator.lo:  \
+	builders/residfp-builder/residfp/$(am__dirstamp) \
+	builders/residfp-builder/residfp/$(DEPDIR)/$(am__dirstamp)
 builders/residfp-builder/residfp/EnvelopeGenerator.lo:  \
 	builders/residfp-builder/residfp/$(am__dirstamp) \
 	builders/residfp-builder/residfp/$(DEPDIR)/$(am__dirstamp)
@@ -1020,6 +1026,9 @@ builders/residfp-builder/residfp/FilterModelConfig.lo:  \
 	builders/residfp-builder/residfp/$(am__dirstamp) \
 	builders/residfp-builder/residfp/$(DEPDIR)/$(am__dirstamp)
 builders/residfp-builder/residfp/Filter.lo:  \
+	builders/residfp-builder/residfp/$(am__dirstamp) \
+	builders/residfp-builder/residfp/$(DEPDIR)/$(am__dirstamp)
+builders/residfp-builder/residfp/Filter8580.lo:  \
 	builders/residfp-builder/residfp/$(am__dirstamp) \
 	builders/residfp-builder/residfp/$(DEPDIR)/$(am__dirstamp)
 builders/residfp-builder/residfp/Filter6581.lo:  \
@@ -1256,7 +1265,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@builders/residfp-builder/residfp/$(DEPDIR)/ExternalFilter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@builders/residfp-builder/residfp/$(DEPDIR)/Filter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@builders/residfp-builder/residfp/$(DEPDIR)/Filter6581.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@builders/residfp-builder/residfp/$(DEPDIR)/Filter8580.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@builders/residfp-builder/residfp/$(DEPDIR)/FilterModelConfig.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@builders/residfp-builder/residfp/$(DEPDIR)/Integrator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@builders/residfp-builder/residfp/$(DEPDIR)/OpAmp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@builders/residfp-builder/residfp/$(DEPDIR)/SID.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@builders/residfp-builder/residfp/$(DEPDIR)/Spline.Plo@am__quote@

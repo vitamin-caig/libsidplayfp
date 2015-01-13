@@ -1,8 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2013 Leandro Nini <drfiemost@users.sourceforge.net>
- * Copyright 2007-2010 Antti Lankila
+ * Copyright 2014 Leandro Nini <drfiemost@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,31 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef SPLINE_H
-#define SPLINE_H
+#define FILTER8580_CPP
 
-namespace reSIDfp
-{
+#include "Filter8580.h"
 
-typedef double(*Params)[6];
-
-/**
- * Spline interpolation
- */
-class Spline
-{
-private:
-    double* c;
-    const int paramsLength;
-    Params params;
-
-public:
-    Spline(const double input[][2], int inputLength);
-    ~Spline() { delete [] params; }
-
-    void evaluate(double x, double* out);
-};
-
-} // namespace reSIDfp
-
-#endif
+// This is needed when compiling with --disable-inline
