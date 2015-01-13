@@ -1,8 +1,9 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2012-2013 Leandro Nini <drfiemost@users.sourceforge.net>
- * Copyright 2010 Antti Lankila
+ * Copyright 2011-2014 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2007-2010 Antti Lankila
+ * Copyright 2000-2001 Simon White
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,34 +20,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef NULLSID_H
-#define NULLSID_H
+#include "sidemu.h"
 
-#include "sidplayfp/c64/c64sid.h"
+std::string sidemu::m_credit;
 
-/**
- * SID chip placeholder which does nothing and returns 0xff on reading.
- */
-class NullSid : public c64sid
+bool sidemu::lock(EventContext *env)
 {
-private:
-    NullSid() {}
-    virtual ~NullSid() {}
+    if (m_locked)
+        return false;
 
-public:
-    /**
-     * Returns singleton instance.
-     */
-    static NullSid *getInstance()
-    {
-        static NullSid nullsid;
-        return &nullsid;
-    }
+    m_locked  = true;
+    m_context = env;
 
-    void reset(uint8_t) {}
+    return true;
+}
 
-    void poke(uint_least16_t address SID_UNUSED, uint8_t value SID_UNUSED) {}
-    uint8_t peek(uint_least16_t address SID_UNUSED) { return 0xff; }
-};
-
-#endif // NULLSID_H
+void sidemu::unlock()
+{
+    m_locked  = false;
+    m_context = 0;
+}

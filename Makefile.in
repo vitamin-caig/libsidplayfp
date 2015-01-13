@@ -232,7 +232,7 @@ am_sidplayfp_libsidplayfp_la_OBJECTS = sidplayfp/config.lo \
 	sidplayfp/psiddrv.lo sidplayfp/mixer.lo sidplayfp/reloc65.lo \
 	sidplayfp/sidbuilder.lo sidplayfp/SidConfig.lo \
 	sidplayfp/sidplayfp.lo sidplayfp/SidTune.lo \
-	sidplayfp/c64/c64.lo sidplayfp/c64/mmu.lo \
+	sidplayfp/sidemu.lo sidplayfp/c64/c64.lo sidplayfp/c64/mmu.lo \
 	sidplayfp/c64/VIC_II/mos656x.lo sidplayfp/c64/CPU/mos6510.lo \
 	sidplayfp/c64/CPU/mos6510debug.lo sidplayfp/c64/CIA/mos6526.lo \
 	sidplayfp/c64/CIA/timer.lo sidplayfp/sidtune/MUS.lo \
@@ -593,6 +593,7 @@ sidplayfp/SidInfoImpl.h \
 sidplayfp/SidTune.cpp \
 sidplayfp/psiddrv.a65 \
 sidplayfp/romCheck.h \
+sidplayfp/sidemu.cpp \
 sidplayfp/sidemu.h \
 sidplayfp/sidendian.h \
 sidplayfp/sidrandom.h \
@@ -1090,6 +1091,8 @@ sidplayfp/sidplayfp.lo: sidplayfp/$(am__dirstamp) \
 	sidplayfp/$(DEPDIR)/$(am__dirstamp)
 sidplayfp/SidTune.lo: sidplayfp/$(am__dirstamp) \
 	sidplayfp/$(DEPDIR)/$(am__dirstamp)
+sidplayfp/sidemu.lo: sidplayfp/$(am__dirstamp) \
+	sidplayfp/$(DEPDIR)/$(am__dirstamp)
 sidplayfp/c64/$(am__dirstamp):
 	@$(MKDIR_P) sidplayfp/c64
 	@: > sidplayfp/c64/$(am__dirstamp)
@@ -1285,6 +1288,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@sidplayfp/$(DEPDIR)/psiddrv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sidplayfp/$(DEPDIR)/reloc65.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sidplayfp/$(DEPDIR)/sidbuilder.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@sidplayfp/$(DEPDIR)/sidemu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sidplayfp/$(DEPDIR)/sidplayfp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sidplayfp/c64/$(DEPDIR)/c64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sidplayfp/c64/$(DEPDIR)/mmu.Plo@am__quote@
