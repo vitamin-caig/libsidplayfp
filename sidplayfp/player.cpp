@@ -104,7 +104,7 @@ void Player::initialise()
 
     psiddrv driver(m_tune->getInfo());
     driver.powerOnDelay(powerOnDelay);
-    if (!driver.drvReloc(m_c64.getMemInterface()))
+    if (!driver.drvReloc())
     {
         throw configError(driver.errorString());
     }
@@ -118,7 +118,7 @@ void Player::initialise()
         throw configError(m_tune->statusString());
     }
 
-    driver.install(m_c64.getMemInterface());
+    driver.install(m_c64.getMemInterface(), videoSwitch);
 
     m_c64.resetCpu();
 }
