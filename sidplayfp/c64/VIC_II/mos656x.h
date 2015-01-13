@@ -24,11 +24,13 @@
 #ifndef MOS656X_H
 #define MOS656X_H
 
-#include <stdint.h> 
+#include <stdint.h>
 
-#include "sidplayfp/event.h" 
-#include "sidplayfp/component.h"
-#include "sidplayfp/EventScheduler.h"
+#include "lightpen.h"
+#include "sprites.h"
+#include "sidplayfp/event.h"
+#include "c64/component.h"
+#include "EventScheduler.h"
 
 
 class MOS656X: public component, private Event
@@ -102,8 +104,8 @@ private:
     /// Set when new frame starts.
     bool vblanking;
 
-    /// Has light pen IRQ been triggered in this frame already?
-    bool lp_triggered;
+    /// Is CIA asserting lightpen?
+    bool lpAsserted;
 
     /// internal IRQ flags
     uint8_t irqFlags;
@@ -112,16 +114,10 @@ private:
     uint8_t irqMask;
 
     /// Light pen coordinates
-    uint8_t lpx, lpy;
+    Lightpen lp;
 
     /// the 8 sprites data
-    //@{
-    uint8_t &sprite_enable, &sprite_y_expansion;
-    uint8_t sprite_exp_flop;
-    uint8_t sprite_dma;
-    uint8_t sprite_mc_base[8];
-    uint8_t sprite_mc[8];
-    //@}
+    Sprites sprites;
 
     /// memory for chip registers
     uint8_t regs[0x40];
@@ -155,7 +151,7 @@ private:
         if (!oldRasterYIRQCondition && rasterYIRQCondition)
             activateIRQFlag(IRQ_RASTER);
     }
-    
+
     /**
      * Set an IRQ flag and trigger an IRQ if the corresponding IRQ mask is set.
      * The IRQ only gets activated, i.e. flag 0x80 gets set, if it was not active before.
@@ -168,7 +164,7 @@ private:
 
     /**
      * Read the value of the raster line IRQ
-     * 
+     *
      * @return raster line when to trigger an IRQ
      */
     unsigned int readRasterLineIRQ() const
@@ -237,71 +233,14 @@ private:
         // Vertical blank (line 0)
         if (vblanking)
         {
-            vblanking = lp_triggered = false;
+            vblanking = false;
             rasterY = 0;
             rasterYIRQEdgeDetector();
-        }
-    }
-
-    /**
-     * Update mc values in one pass
-     * after the dma has been processed
-     */
-    inline void updateMc()
-    {
-        uint8_t mask = 1;
-        for (unsigned int i=0; i<8; i++, mask<<=1)
-        {
-            if (sprite_dma & mask)
-                sprite_mc[i] = (sprite_mc[i] + 3) & 0x3f;
-        }
-    }
-
-    inline void updateMcBase()
-    {
-        uint8_t mask = 1;
-        for (unsigned int i=0; i<8; i++, mask<<=1)
-        {
-            if (sprite_exp_flop & mask)
+            lp.untrigger();
+            if (lpAsserted && lp.retrigger(lineCycle, rasterY))
             {
-                sprite_mc_base[i] = sprite_mc[i];
-                if (sprite_mc_base[i] == 0x3f)
-                    sprite_dma &= ~mask;
+                activateIRQFlag(IRQ_LIGHTPEN);
             }
-        }
-    }
-
-    /**
-     * Calculate sprite expansion.
-     */
-    inline void checkSpriteExp()
-    {
-        sprite_exp_flop ^= sprite_dma & sprite_y_expansion;
-    }
-
-    /**
-     * Calculate sprite DMA.
-     */
-    inline void checkSpriteDma()
-    {
-        const uint8_t y = rasterY & 0xff;
-        uint8_t mask = 1;
-        for (unsigned int i=0; i<8; i++, mask<<=1)
-        {
-            if ((sprite_enable & mask) && (y == regs[(i << 1) + 1]) && !(sprite_dma & mask))
-            {
-                sprite_dma |= mask;
-                sprite_mc_base[i] = 0;
-                sprite_exp_flop |= mask;
-            }
-        }
-    }
-
-    inline void checkSpriteDisplay()
-    {
-        for (unsigned int i=0; i<8; i++)
-        {
-            sprite_mc[i] = sprite_mc_base[i];
         }
     }
 
@@ -311,7 +250,7 @@ private:
     template<int n>
     inline void startDma()
     {
-        if (sprite_dma & (0x01 << n))
+        if (sprites.isDma(0x01 << n))
             setBA(false);
     }
 
@@ -321,7 +260,7 @@ private:
     template<int n>
     inline void endDma()
     {
-        if (!(sprite_dma & (0x06 << n)))
+        if (!sprites.isDma(0x06 << n))
             setBA(true);
     }
 
@@ -364,12 +303,21 @@ public:
     void event();
 
     void chip(model_t model);
-    void lightpen();
+
+    /**
+     * Trigger the lightpen. Sets the lightpen usage flag.
+     */
+    void triggerLightpen();
+
+    /**
+     * Clears the lightpen usage flag.
+     */
+    void clearLightpen();
 
     // Component Standard Calls
     void reset();
 
-    const char *credits() const { return credit; }
+    static const char *credits() { return credit; }
 };
 
 // Template specializations
@@ -380,7 +328,7 @@ public:
 template<>
 inline void MOS656X::startDma<0>()
 {
-    setBA(!(sprite_dma & 0x01));
+    setBA(!sprites.isDma(0x01));
 }
 
 /**

@@ -40,9 +40,6 @@ private:
     uint_least16_t m_powerOnDelay;
 
 private:
-    static uint8_t psid_driver[];
-
-private:
     /**
      * Get required I/O map to reach address
      *
@@ -50,11 +47,6 @@ private:
      * @return a default bank-select value for $01
      */
     uint8_t iomap(uint_least16_t addr) const;
-
-    /**
-     * Copy power on pattern in memory.
-     */
-    void copyPoweronPattern(sidmemory *mem) const;
 
 public:
     psiddrv(const SidTuneInfo *tuneInfo) :

@@ -51,13 +51,9 @@ namespace reSIDfp
 class SincResampler : public Resampler
 {
 private:
-    typedef std::map<std::string, matrix_t> fir_cache_t;
-
-private:
     static const int RINGSIZE = 2048;
 
-    static const int BITS = 16;
-
+private:
     matrix_t* firTable;
 
     int sampleIndex;
@@ -72,33 +68,7 @@ private:
 
     short sample[RINGSIZE * 2];
 
-    /// Cache for the expensive FIR table computation results.
-    static fir_cache_t FIR_CACHE;
-
-    /// Maximum error acceptable in I0 is 1e-6, or ~96 dB.
-    static const double I0E;
-
 private:
-    /**
-     * I0() computes the 0th order modified Bessel function of the first kind.
-     * This function is originally from resample-1.5/filterkit.c by J. O. Smith.
-     * It is used to build the Kaiser window for resampling.
-     *
-     * @param x evaluate I0 at x
-     * @return value of I0 at x.
-     */
-    static double I0(double x);
-
-    /**
-     * Calculate convolution with sample and sinc.
-     *
-     * @param a sample buffer input
-     * @param b sinc
-     * @param bLength length of the sinc buffer
-     * @return convolved result
-     */
-    static int convolve(const short* a, const short* b, int bLength);
-
     int fir(int subcycle);
 
 public:

@@ -22,9 +22,9 @@
 
 #include "mixer.h"
 
-#include <algorithm> 
+#include <algorithm>
 
-#include "sidplayfp/sidemu.h"
+#include "sidemu.h"
 
 void clockChip(sidemu *s) { s->clock(); }
 
@@ -140,7 +140,7 @@ void Mixer::updateParams()
 void Mixer::clearSids()
 {
     m_chips.clear();
-    m_buffers.clear();    
+    m_buffers.clear();
 }
 
 void Mixer::addSid(sidemu *chip)

@@ -23,13 +23,14 @@
 #define SIDBANK_H
 
 #include "Bank.h"
-#include "sidplayfp/c64/c64sid.h"
+#include "c64/c64sid.h"
 
 #include "NullSid.h"
 
 /**
  * SID
- * located at $D400-$D7FF, mirrored each 32 bytes
+ *
+ * Located at $D400-$D7FF, mirrored each 32 bytes
  */
 class SidBank : public Bank
 {

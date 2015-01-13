@@ -17,6 +17,7 @@ AM_CPPFLAGS = -I $(top_builddir)/builders/residfp-builder \
 -I $(top_builddir)/builders/resid-builder \
 -I $(top_builddir)/builders/resid-builder/resid \
 -I $(top_builddir)/sidplayfp \
+-I $(top_srcdir)/sidplayfp \
 @debug_flags@
 
 #=========================================================
@@ -59,7 +60,6 @@ endif
 #=========================================================
 # libsidplayfp
 sidplayfp_libsidplayfp_la_SOURCES = \
-sidplayfp/component.h \
 sidplayfp/config.cpp \
 sidplayfp/EventScheduler.cpp \
 sidplayfp/EventScheduler.h \
@@ -94,6 +94,7 @@ sidplayfp/c64/c64sid.h \
 sidplayfp/c64/c64vic.h \
 sidplayfp/c64/c64.cpp \
 sidplayfp/c64/c64.h \
+sidplayfp/c64/component.h \
 sidplayfp/c64/mmu.cpp \
 sidplayfp/c64/mmu.h \
 sidplayfp/c64/Banks/ColorRAMBank.h \
@@ -107,6 +108,9 @@ sidplayfp/c64/Banks/SystemROMBanks.h \
 sidplayfp/c64/Banks/ZeroRAMBank.h \
 sidplayfp/c64/VIC_II/mos656x.cpp \
 sidplayfp/c64/VIC_II/mos656x.h \
+sidplayfp/c64/VIC_II/lightpen.h \
+sidplayfp/c64/VIC_II/sprites.h \
+sidplayfp/c64/CPU/flags.h \
 sidplayfp/c64/CPU/mos6510.cpp \
 sidplayfp/c64/CPU/mos6510.h \
 sidplayfp/c64/CPU/mos6510debug.cpp \
@@ -116,6 +120,8 @@ sidplayfp/c64/CIA/mos6526.cpp \
 sidplayfp/c64/CIA/mos6526.h \
 sidplayfp/c64/CIA/timer.cpp \
 sidplayfp/c64/CIA/timer.h \
+sidplayfp/c64/CIA/tod.cpp \
+sidplayfp/c64/CIA/tod.h \
 sidplayfp/sidtune/MUS.cpp \
 sidplayfp/sidtune/MUS.h \
 sidplayfp/sidtune/p00.cpp \
@@ -318,13 +324,17 @@ endif
 # test
 if TESTSUITE
 noinst_PROGRAMS = \
+test/demo \
 test/test \
 builders/residfp-builder/residfp/resample/test
 
+test_demo_SOURCES = test/demo.cpp 
+
+test_demo_LDADD = sidplayfp/libsidplayfp.la
+
 test_test_SOURCES = test/test.cpp 
 
-test_test_LDADD = sidplayfp/libsidplayfp.la \
-builders/residfp-builder/libsidplayfp-residfp.la
+test_test_LDADD = sidplayfp/libsidplayfp.la
 
 builders_residfp_builder_residfp_resample_test_SOURCES = builders/residfp-builder/residfp/resample/test.cpp
 
@@ -335,3 +345,14 @@ endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libsidplayfp.pc libstilview.pc
+
+#=========================================================
+# Recreate psiddrv.bin, needs xa65
+
+CLEANFILES = sidplayfp/psiddrv.o65 sidplayfp/psiddrv.bin
+
+sidplayfp/psiddrv.o65:
+	xa -R -G $(srcdir)/sidplayfp/psiddrv.a65 -o $@
+
+sidplayfp/psiddrv.bin: sidplayfp/psiddrv.o65
+	od -v -An -w8 -tx1 $< | sed -re 's/[[:alnum:]]+/0x&,/g' > sidplayfp/psiddrv.bin

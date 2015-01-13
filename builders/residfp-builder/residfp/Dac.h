@@ -30,11 +30,11 @@ namespace reSIDfp
  * Estimate DAC nonlinearity.
  * The SID DACs are built up as R-2R ladder as follows:
  *
- *          n  n-1      2   1   0    VGND
- *          |   |       |   |   |      |   Termination
- *         2R  2R      2R  2R  2R     2R   only for
- *          |   |       |   |   |      |   MOS 8580
- *      Vo  --R---R--...--R---R--    ---
+ *         n  n-1      2   1   0    VGND
+ *         |   |       |   |   |      |   Termination
+ *        2R  2R      2R  2R  2R     2R   only for
+ *         |   |       |   |   |      |   MOS 8580
+ *     Vo  --R---R--...--R---R--    ---
  *
  *
  * All MOS 6581 DACs are missing a termination resistor at bit 0. This causes
@@ -51,17 +51,16 @@ namespace reSIDfp
  * These DACs include the correct termination resistor, and also seem to have
  * very accurately matched R and 2R resistors (2R/R = 2.00).
  */
-class Dac
+namespace Dac
 {
-public:
     /**
      * @param dac an array to be filled with the resulting analog values
      * @param dacLength the dac array length
      * @param _2R_div_R nonlinearity parameter, 1.0 for perfect linearity.
      * @param term is the dac terminated by a 2R resistor? (6581 DACs are not)
      */
-    static void kinkedDac(double* dac, int dacLength, double _2R_div_R, bool term);
-};
+    void kinkedDac(double* dac, int dacLength, double _2R_div_R, bool term);
+}
 
 } // namespace reSIDfp
 

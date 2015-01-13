@@ -59,7 +59,6 @@ namespace reSIDfp
  * comparator; output is either all one or all zero bits.
  * The pulse setting is delayed one cycle after the compare; this is only
  * modeled for single cycle clocking.
- *
  * The test bit, when set to one, holds the pulse waveform output at 0xfff
  * regardless of the pulse width setting.
  *
@@ -72,15 +71,15 @@ namespace reSIDfp
  *
  * Operation: Calculate EOR result, shift register, set bit 0 = result.
  *
- *                reset    -------------------------------------------
- *                  |     |                                           |
- *           test--OR-->EOR<--                                        |
- *                  |         |                                       |
- *                  2 2 2 1 1 1 1 1 1 1 1 1 1                         |
- * Register bits:   2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 <---
- *                      |   |       |     |   |       |     |   |
- * Waveform bits:       1   1       9     8   7       6     5   4
- *                      1   0
+ *                    reset    -------------------------------------------
+ *                      |     |                                           |
+ *               test--OR-->EOR<--                                        |
+ *                      |         |                                       |
+ *                      2 2 2 1 1 1 1 1 1 1 1 1 1                         |
+ *     Register bits:   2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 <---
+ *                          |   |       |     |   |       |     |   |
+ *     Waveform bits:       1   1       9     8   7       6     5   4
+ *                          1   0
  *
  * The low 4 waveform bits are zero (grounded).
  */
@@ -88,6 +87,8 @@ class WaveformGenerator
 {
 private:
     matrix_t* model_wave;
+
+    short* wave;
 
     // PWout = (PWn/40.95)%
     int pw;
@@ -111,8 +112,6 @@ private:
     int waveform;
 
     int floating_output_ttl;
-
-    short* wave;
 
     int waveform_output;
 
@@ -174,6 +173,7 @@ public:
      */
     WaveformGenerator() :
         model_wave(0),
+        wave(0),
         pw(0),
         shift_register(0),
         shift_register_reset(0),
@@ -186,7 +186,6 @@ public:
         pulse_output(0),
         waveform(0),
         floating_output_ttl(0),
-        wave(0),
         waveform_output(0),
         accumulator(0),
         freq(0),
