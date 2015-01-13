@@ -27,12 +27,11 @@
 #include <cstdio>
 
 #include "sidplayfp/EventScheduler.h"
+#include "sidplayfp/c64/mmu.h"
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
-
-class EventContext;
 
 /**
 * Cycle-exact 6502/6510 emulation core.
@@ -67,7 +66,7 @@ public:
 protected:
     struct ProcessorCycle
     {
-        void (MOS6510::*func)();
+        void (*func)(MOS6510&);
         bool nosteal;
         ProcessorCycle () :
             func(0),
@@ -77,6 +76,9 @@ protected:
 protected:
     /** Our event context copy. */
     EventContext &eventContext;
+
+    /** Our memory manager copy */
+    MMU &memory;
 
     /** Current instruction and subcycle within instruction */
     int cycleCount;
@@ -130,17 +132,18 @@ protected:
     struct ProcessorCycle  instrTable[0x101 << 3];
 
 protected:
-    MOS6510(EventContext *context);
+    MOS6510(EventContext &context, MMU &memory);
     ~MOS6510() {}
 
     /** Represents an instruction subcycle that writes */
-    EventCallback<MOS6510> m_nosteal;
+    FastEventCallback<MOS6510> m_nosteal;
 
     /** Represents an instruction subcycle that reads */
-    EventCallback<MOS6510> m_steal;
+    FastEventCallback<MOS6510> m_steal;
 
-    void eventWithoutSteals();
-    void eventWithSteals();
+    static void eventWithoutSteals(MOS6510& self);
+    void eventWithoutStealsFast();
+    static void eventWithSteals(MOS6510& self);
 
     void Initialise();
 
@@ -272,23 +275,16 @@ protected:
     inline void doSBC();
 
     inline void doJSR();
-
 public:
-    /**
-    * Get data from system environment
-    *
-    * @param address
-    * @return data byte CPU requested
-    */
-    virtual uint8_t cpuRead(uint_least16_t addr) =0;
+    inline uint8_t cpuRead(uint_least16_t addr)
+    {
+      return memory.cpuRead(addr);
+    }
 
-    /**
-    * Write data to system environment
-    *
-    * @param address
-    * @param data
-    */
-    virtual void cpuWrite(uint_least16_t addr, uint8_t data) =0;
+    inline void cpuWrite(uint_least16_t addr, uint8_t data)
+    {
+      memory.cpuWrite(addr, data);
+    }
 
 #ifdef PC64_TESTSUITE
     virtual void loadFile (const char *file) =0;

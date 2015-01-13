@@ -141,12 +141,15 @@ public:
     void write(uint_least8_t addr, uint8_t data);
 
     void clock();
+    void clockSilent();
     const char *error() const { return m_errorBuffer.c_str(); }
     bool getStatus() const { return m_status; }
 
     // Standard SID functions
     void filter(bool enable);
     void model(SidConfig::sid_model_t model SID_UNUSED) {;}
+    void analyze(unsigned int tone[3] SID_UNUSED, unsigned int level[3] SID_UNUSED) {;}
+
     void voice(unsigned int num, bool mute);
     // HardSID specific
     void flush();

@@ -62,6 +62,7 @@ public:
     virtual void reset(uint8_t volume) = 0;
 
     virtual void clock() = 0;
+    virtual void clockSilent() = 0;
 
     virtual bool lock(EventContext *env) = 0;
     virtual void unlock() = 0;
@@ -69,6 +70,7 @@ public:
     // Standard SID functions
     virtual void voice(unsigned int num, bool mute) = 0;
     virtual void model(SidConfig::sid_model_t model) = 0;
+    virtual void analyze(unsigned int tone[3], unsigned int level[3]) = 0;
 
     sidbuilder *builder() const { return m_builder; }
 

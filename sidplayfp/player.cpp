@@ -80,17 +80,6 @@ void Player::setRoms(const uint8_t* kernal, const uint8_t* basic, const uint8_t*
     m_c64.setRoms(kernal, basic, character);
 }
 
-bool Player::fastForward(unsigned int percent)
-{
-    if (!m_mixer.setFastForward(percent / 100))
-    {
-        m_errorString = "SIDPLAYER ERROR: Percentage value out of range.";
-        return false;
-    }
-
-    return true;
-}
-
 void Player::initialise()
 {
     m_isPlaying = false;
@@ -161,6 +150,27 @@ void Player::mute(unsigned int sidNum, unsigned int voice, bool enable)
     sidemu *s = m_mixer.getSid(sidNum);
     if (s)
         s->voice(voice, enable);
+}
+
+unsigned int Player::getState(unsigned int* freqs, unsigned int* levels) const
+{
+  if (!m_mixer.samplesBuffer())
+  {
+    //seek mode
+    return 0;
+  }
+  for (unsigned s = 0; ; ++s)
+  {
+    const unsigned step = s * 3;
+    if (sidemu* sid = m_mixer.getSid(s))
+    {
+        sid->analyze(freqs + step, levels + step);
+    }
+    else
+    {
+      return step;
+    }
+  }
 }
 
 uint_least32_t Player::play(short *buffer, uint_least32_t count)

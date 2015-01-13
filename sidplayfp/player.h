@@ -120,8 +120,6 @@ public:
 
     bool config(const SidConfig &cfg);
 
-    bool fastForward(unsigned int percent);
-
     bool load(SidTune *tune);
 
     double cpuFreq() const { return m_c64.getMainCpuSpeed(); }
@@ -137,6 +135,8 @@ public:
     void debug(const bool enable, FILE *out) { m_c64.debug (enable, out); }
 
     void mute(unsigned int sidNum, unsigned int voice, bool enable);
+
+    unsigned int getState(unsigned int* freqs, unsigned int* levels) const;
 
     const char *error() const { return m_errorString; }
 

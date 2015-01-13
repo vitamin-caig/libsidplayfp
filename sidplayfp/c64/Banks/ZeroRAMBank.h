@@ -86,8 +86,20 @@ private:
 private:
     PLA* pla;
 
-    /** C64 RAM area */
-    Bank* ramBank;
+    /** C64 RAM area. Use static types to avoid unneeded polymorphism */
+    SystemRAMBank* ramBank;
+
+    /** Value written to processor port.  */
+    //@{
+    unsigned dir;
+    unsigned data;
+    //@}
+
+    /** Value read from processor port.  */
+    unsigned dataRead;
+
+    /** State of processor port pins.  */
+    unsigned procPortPins;
 
     /** cycle that should invalidate the unused bits of the data port. */
     //@{
@@ -108,18 +120,6 @@ private:
     uint8_t dataSetBit6;
     uint8_t dataSetBit7;
     //@}
-
-    /** Value written to processor port.  */
-    //@{
-    uint8_t dir;
-    uint8_t data;
-    //@}
-
-    /** Value read from processor port.  */
-    uint8_t dataRead;
-
-    /** State of processor port pins.  */
-    uint8_t procPortPins;
 
 private:
     void updateCpuPort()
@@ -146,7 +146,7 @@ private:    // prevent copying
     ZeroRAMBank& operator=(const ZeroRAMBank&);
 
 public:
-    ZeroRAMBank(PLA* pla, Bank* ramBank) :
+    ZeroRAMBank(PLA* pla, SystemRAMBank* ramBank) :
         pla(pla),
         ramBank(ramBank) {}
 
@@ -179,12 +179,19 @@ public:
 
     uint8_t peek(uint_least16_t address)
     {
-        switch (address)
+        if (sidmemory::READ_BANK_GRANULARITY > 2 && address > 1)
         {
-        case 0:
+            return ramBank->peekByte(address);
+        }
+        else if (0 == address)
+        {
             return dir;
-        case 1:
+        }
+        else
         {
+#ifdef FAST_AND_ROUGH
+            return dataRead;
+#else
             /* discharge the "capacitor" */
             if (dataFalloffBit6 || dataFalloffBit7)
             {
@@ -222,19 +229,20 @@ public:
                 retval &= ~0x80;
                 retval |= dataSetBit7;
             }
-
             return retval;
-        }
-        default:
-            return ramBank->peek(address);
+#endif
         }
     }
 
     void poke(uint_least16_t address, uint8_t value)
     {
-        switch (address)
+        if (sidmemory::WRITE_BANK_GRANULARITY > 2 && address > 1)
         {
-        case 0:
+            ramBank->pokeByte(address, value);
+        }
+        else if (0 == address)
+        {
+#ifndef FAST_AND_ROUGH
             /* when switching an unused bit from output (where it contained a
              * stable value) to input mode (where the input is floating), some
              * of the charge is transferred to the floating input */
@@ -254,18 +262,19 @@ public:
                 dataSetBit7 = data & 0x80;
                 dataFalloffBit7 = true;
             }
-
+#endif
             if (dir != value)
             {
                 dir = value;
                 updateCpuPort();
             }
-            value = pla->getLastReadByte();
-            break;
-        case 1:
-            /* when writing to an unused bit that is output, charge the "capacitor",
-             * otherwise don't touch it */
-
+            ramBank->pokeByte(address, pla->getLastReadByte());
+        }
+        else
+        {
+#ifndef FAST_AND_ROUGH
+          /* when writing to an unused bit that is output, charge the "capacitor",
+           * otherwise don't touch it */
             if (dir & 0x40)
             {
                 dataSetBit6 = value & 0x40;
@@ -279,19 +288,14 @@ public:
                 dataSetClkBit7 = pla->getPhi2Time() + C64_CPU6510_DATA_PORT_FALL_OFF_CYCLES;
                 dataFalloffBit7 = true;
             }
-
+#endif
             if (data != value)
             {
                 data = value;
                 updateCpuPort();
             }
-            value = pla->getLastReadByte();
-            break;
-        default:
-            break;
+            ramBank->pokeByte(address, value);
         }
-
-        ramBank->poke(address, value);
     }
 };
 

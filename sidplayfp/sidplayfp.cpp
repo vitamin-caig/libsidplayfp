@@ -81,14 +81,14 @@ const char *sidplayfp::error() const
     return sidplayer.error();
 }
 
-bool  sidplayfp::fastForward(unsigned int percent)
-{
-    return sidplayer.fastForward(percent);
-}
-
 void sidplayfp::mute(unsigned int sidNum, unsigned int voice, bool enable)
 {
     sidplayer.mute(sidNum, voice, enable);
+}
+
+unsigned int sidplayfp::getState(unsigned int* freqs, unsigned int* levels) const
+{
+    return sidplayer.getState(freqs, levels);
 }
 
 void sidplayfp::debug(bool enable, FILE *out)
@@ -114,4 +114,9 @@ EventContext *sidplayfp::getEventContext()
 uint_least16_t sidplayfp::getCia1TimerA() const
 {
     return sidplayer.getCia1TimerA();
+}
+
+uint_least32_t sidplayfp::getCPUFreq() const
+{
+    return sidplayer.cpuFreq();
 }

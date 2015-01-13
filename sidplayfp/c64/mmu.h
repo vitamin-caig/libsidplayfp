@@ -47,11 +47,13 @@ private:
     /** CPU port signals */
     bool loram, hiram, charen;
 
-    /** CPU read memory mapping in 4k chunks */
-    Bank* cpuReadMap[16];
+    typedef uint8_t (*ReadFunc)(MMU& self, uint_least16_t addr);
 
-    /** CPU write memory mapping in 4k chunks */
-    Bank* cpuWriteMap[16];
+    /** CPU read memory mapping in READ_BANK_GRANULARITY chunks */
+    ReadFunc cpuReadMap[65536 / READ_BANK_GRANULARITY];
+
+    /** CPU write memory mapping in WRITE_BANK_GRANULARITY chunks */
+    Bank* cpuWriteMap[65536 / WRITE_BANK_GRANULARITY];
 
     /** IO region handler */
     Bank* ioBank;
@@ -69,7 +71,50 @@ private:
     SystemRAMBank ramBank;
 
     ZeroRAMBank zeroRAMBank;
+private:
+    static uint8_t IO_Read(MMU& self, uint_least16_t addr)
+    {
+      return self.ioBank->peek(addr);
+    }
 
+    static uint8_t KernalROM_Read(MMU& self, uint_least16_t addr)
+    {
+      return self.kernalRomBank.peek(addr);
+    }
+
+    static uint8_t BasicROM_Read(MMU& self, uint_least16_t addr)
+    {
+      return self.basicRomBank.peek(addr);
+    }
+
+    static uint8_t CharROM_Read(MMU& self, uint_least16_t addr)
+    {
+      return self.characterRomBank.peekByte(addr);
+    }
+
+    static uint8_t RAM_Read(MMU& self, uint_least16_t addr)
+    {
+      return self.ramBank.peekByte(addr);
+    }
+
+    static uint8_t ZeroRAM_Read(MMU& self, uint_least16_t addr)
+    {
+      return self.zeroRAMBank.peek(addr);
+    }
+
+    inline unsigned getReadBankIndex(uint_least16_t addr) const
+    {
+      return addr / READ_BANK_GRANULARITY;
+    }
+
+    inline unsigned getWriteBankIndex(uint_least16_t addr) const
+    {
+      return addr / WRITE_BANK_GRANULARITY;
+    }
+
+    void setReadFunc(uint_least16_t start, int size, ReadFunc func);
+
+    void setWriteBank(uint_least16_t start, int size, Bank* bank);
 private:
     void setCpuPort(int state);
     void updateMappingPHI2();
@@ -91,18 +136,19 @@ public:
 
     // RAM access methods
     uint8_t readMemByte(uint_least16_t addr) { return ramBank.peek(addr); }
-    uint_least16_t readMemWord(uint_least16_t addr) { return endian_little16(ramBank.ram+addr); }
+    uint_least16_t readMemWord(uint_least16_t addr) { return ramBank.peekWord(addr); }
 
     void writeMemByte(uint_least16_t addr, uint8_t value) { ramBank.poke(addr, value); }
-    void writeMemWord(uint_least16_t addr, uint_least16_t value) { endian_little16(ramBank.ram+addr, value); }
+    void writeMemWord(uint_least16_t addr, uint_least16_t value) { ramBank.pokeWord(addr, value); }
 
     void fillRam(uint_least16_t start, uint8_t value, unsigned int size)
     {
-        memset(ramBank.ram+start, value, size);
+        ramBank.fill(start, value, size);
     }
+
     void fillRam(uint_least16_t start, const uint8_t* source, unsigned int size)
     {
-        memcpy(ramBank.ram+start, source, size);
+        ramBank.fill(start, source, size);
     }
 
     // SID specific hacks
@@ -112,21 +158,9 @@ public:
 
     void setBasicSubtune(uint8_t tune) { basicRomBank.setSubtune(tune); }
 
-    /**
-     * Access memory as seen by CPU.
-     *
-     * @param addr the address where to read from
-     * @return value at address
-     */
-    uint8_t cpuRead(uint_least16_t addr) const { return cpuReadMap[addr >> 12]->peek(addr); }
+    uint8_t cpuRead(uint_least16_t addr) { return (cpuReadMap[getReadBankIndex(addr)])(*this, addr); }
 
-    /**
-     * Access memory as seen by CPU.
-     *
-     * @param addr the address where to write
-     * @param data the value to write
-     */
-    void cpuWrite(uint_least16_t addr, uint8_t data) { cpuWriteMap[addr >> 12]->poke(addr, data); }
+    void cpuWrite(uint_least16_t addr, uint8_t data) { cpuWriteMap[getWriteBankIndex(addr)]->poke(addr, data); }
 };
 
 #endif

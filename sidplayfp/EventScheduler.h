@@ -46,6 +46,26 @@ public:
         m_callback(callback) {}
 };
 
+template< class This >
+class FastEventCallback: public Event
+{
+private:
+    typedef void (*Callback) (This&);
+
+private:
+    This &m_this;
+    Callback const m_callback;
+
+private:
+    void event() { m_callback(m_this); }
+
+public:
+    FastEventCallback(const char * const name, This &_this, Callback callback) :
+        Event(name),
+        m_this(_this),
+        m_callback(callback) {}
+};
+
 
 /**
 * Fast EventScheduler implementation
@@ -84,22 +104,28 @@ private:
     }
 
 protected:
-    void schedule(Event &event, event_clock_t cycles,
+    void schedule(Event &event, unsigned cycles,
                    event_phase_t phase)
     {
         // this strange formulation always selects the next available slot regardless of specified phase.
-        event.triggerTime = (cycles << 1) + currentTime + ((currentTime & 1) ^ phase);
+        event.triggerTime = currentTime + ((currentTime & 1) ^ phase) + (cycles << 1);
         schedule(event);
     }
 
-    void schedule(Event &event, event_clock_t cycles)
+    void schedule(Event &event, unsigned cycles)
     {
-        event.triggerTime = (cycles << 1) + currentTime;
+        event.triggerTime = currentTime + (cycles << 1);
         schedule(event);
     }
 
     void cancel(Event &event);
 
+    void yield(Event& event)
+    {
+      event.triggerTime = firstEvent ? firstEvent->triggerTime : 0;
+      event.next = firstEvent;
+      firstEvent = &event;
+    }
 public:
     EventScheduler () :
           currentTime(0),

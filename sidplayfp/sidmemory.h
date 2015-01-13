@@ -99,6 +99,31 @@ public:
     */
     virtual void setBasicSubtune(uint8_t tune) =0;
 
+    /** Use small granularity to
+     * 1) avoid redundand ZeroRam checks for first bank
+     * 2) avoid bank mapping for every operation
+     **/
+    static const unsigned READ_BANK_GRANULARITY = 2;
+    static const unsigned WRITE_BANK_GRANULARITY = 4096;
+
+    /**
+     * Access memory as seen by CPU.
+     *
+     * Make it non-virtual to speedup due to polymorphism disabling and possible inlining.
+     *
+     * @param addr the address where to read from
+     * @return value at address
+     */
+    uint8_t cpuRead(uint_least16_t addr);
+
+    /**
+     * Access memory as seen by CPU.
+     *
+     * @param addr the address where to write
+     * @param data the value to write
+     */
+    virtual void cpuWrite(uint_least16_t addr, uint8_t data) = 0;
+
 protected:
     ~sidmemory() {}
 };

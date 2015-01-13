@@ -77,6 +77,7 @@ public:
 
     // Standard SID functions
     void clock();
+    void clockSilent();
     void filter(bool enable);
     void voice(unsigned int num, bool mute);
 
@@ -88,6 +89,7 @@ public:
 
     void bias(double dac_bias);
     void model(SidConfig::sid_model_t model);
+    void analyze(unsigned int tone[3], unsigned int level[3]);
 
     // Must lock the SID before using the standard functions.
     bool lock(EventContext *env);

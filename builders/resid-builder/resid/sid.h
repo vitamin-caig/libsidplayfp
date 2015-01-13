@@ -48,7 +48,7 @@ public:
   void adjust_sampling_frequency(double sample_freq);
 
   void clock();
-  void clock(cycle_count delta_t);
+  void clock(cycle_count delta_t, bool soundOutput);
   int clock(cycle_count& delta_t, short* buf, int n, int interleave = 1);
   void reset();
   
@@ -90,6 +90,8 @@ public:
   State read_state();
   void write_state(const State& state);
 
+  void read_state(unsigned freqs[3], unsigned levels[3]);
+
   // 16-bit input (EXT IN).
   void input(short sample);
 
@@ -98,6 +100,7 @@ public:
 
  protected:
   static double I0(double x);
+  int clock_silence(cycle_count& delta_t, int n);
   int clock_fast(cycle_count& delta_t, short* buf, int n, int interleave);
   int clock_interpolate(cycle_count& delta_t, short* buf, int n,
 			int interleave);

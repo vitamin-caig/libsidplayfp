@@ -22,8 +22,6 @@
 
 #include "mmu.h"
 
-class Bank;
-
 static const uint8_t POWERON[] =
 {
 #include "poweron.bin"
@@ -37,14 +35,29 @@ MMU::MMU(EventContext *context, Bank* ioBank) :
     ioBank(ioBank),
     zeroRAMBank(this, &ramBank)
 {
-    cpuReadMap[0] = &zeroRAMBank;
-    cpuWriteMap[0] = &zeroRAMBank;
+    setReadFunc(0, 65536, &MMU::RAM_Read);
+    setWriteBank(0, 65536, &ramBank);
 
-    for (int i = 1; i < 16; i++)
-    {
-        cpuReadMap[i] = &ramBank;
-        cpuWriteMap[i] = &ramBank;
-    }
+    // fill later for cover cases when GRANULARITY > 2
+    setReadFunc(0, 2, &MMU::ZeroRAM_Read);
+    setWriteBank(0, 2, &zeroRAMBank);
+}
+
+void MMU::setReadFunc(uint_least16_t start, int size, MMU::ReadFunc func)
+{
+  //aggressive loop optimization sometimes break cycle
+  for (int idx = getReadBankIndex(start), rest = size; rest > 0; ++idx, rest -= READ_BANK_GRANULARITY)
+  {
+    cpuReadMap[idx] = func;
+  }
+}
+
+void MMU::setWriteBank(uint_least16_t start, int size, Bank* bank)
+{
+  for (int idx = getWriteBankIndex(start), rest = size; rest > 0; ++idx, rest -= WRITE_BANK_GRANULARITY)
+  {
+    cpuWriteMap[idx] = bank;
+  }
 }
 
 void MMU::setCpuPort (int state)
@@ -57,17 +70,18 @@ void MMU::setCpuPort (int state)
 
 void MMU::updateMappingPHI2()
 {
-    cpuReadMap[0xe] = cpuReadMap[0xf] = hiram ? (Bank*)&kernalRomBank : &ramBank;
-    cpuReadMap[0xa] = cpuReadMap[0xb] = (loram && hiram) ? (Bank*)&basicRomBank : &ramBank;
+    setReadFunc(0xe000, 0x2000, hiram ? &MMU::KernalROM_Read : &MMU::RAM_Read);
+    setReadFunc(0xa000, 0x2000, (loram && hiram) ? &MMU::BasicROM_Read : &MMU::RAM_Read);
 
     if (charen && (loram || hiram))
     {
-        cpuReadMap[0xd] = cpuWriteMap[0xd] = ioBank;
+        setReadFunc(0xd000, 0x1000, &MMU::IO_Read);
+        setWriteBank(0xd000, 0x1000, ioBank);
     }
     else
     {
-        cpuReadMap[0xd] = (!charen && (loram || hiram)) ? (Bank*)&characterRomBank : &ramBank;
-        cpuWriteMap[0xd] = &ramBank;
+        setReadFunc(0xd000, 0x1000, (!charen && (loram || hiram)) ? &MMU::CharROM_Read : &MMU::RAM_Read);
+        setWriteBank(0xd000, 0x1000, &ramBank);
     }
 }
 

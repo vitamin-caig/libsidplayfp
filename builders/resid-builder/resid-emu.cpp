@@ -100,6 +100,13 @@ void ReSID::clock()
     m_bufferpos += m_sid.clock(cycles, (short *) m_buffer + m_bufferpos, OUTPUTBUFFERSIZE - m_bufferpos, 1);
 }
 
+void ReSID::clockSilent()
+{
+  RESID_NS::cycle_count cycles = m_context->getTime(m_accessClk, EVENT_CLOCK_PHI1);
+  m_accessClk += cycles;
+  m_bufferpos += m_sid.clock(cycles, 0, OUTPUTBUFFERSIZE - m_bufferpos, 1);
+}
+
 void ReSID::filter(bool enable)
 {
     m_sid.enable_filter(enable);
@@ -187,4 +194,9 @@ void ReSID::model(SidConfig::sid_model_t model)
     
     m_sid.set_chip_model (chipModel);
     m_status = true;
+}
+
+void ReSID::analyze(unsigned int tone[3], unsigned int level[3])
+{
+    m_sid.read_state(tone, level);
 }

@@ -68,6 +68,7 @@ public:
 
     // Standard SID functions
     void clock();
+    void clockSilent();
     void filter(bool enable);
     void voice(unsigned int num, bool mute) { m_sid.mute(num, mute); }
 
@@ -80,6 +81,7 @@ public:
     void filter6581Curve(double filterCurve);
     void filter8580Curve(double filterCurve);
     void model(SidConfig::sid_model_t model);
+    void analyze(unsigned int tone[3], unsigned int level[3]);
 
     // Must lock the SID before using the standard functions.
     bool lock(EventContext *env);

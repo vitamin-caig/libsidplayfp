@@ -344,6 +344,16 @@ void SID::write(int offset, unsigned char value)
     }
 }
 
+void SID::readState(unsigned freqs[3], unsigned levels[3])
+{
+    for (unsigned i = 0; i != 3; ++i)
+    {
+        Voice& v = *voice[i];
+        freqs[i] = v.wave()->readFreq();
+        levels[i] = v.envelope()->readSUS();
+    }
+}
+
 void SID::setSamplingParameters(double clockFrequency, SamplingMethod method, double samplingFrequency, double highestAccurateFrequency)
 {
     filter6581->setClockFrequency(clockFrequency);
@@ -367,9 +377,10 @@ void SID::setSamplingParameters(double clockFrequency, SamplingMethod method, do
     }
 }
 
-void SID::clockSilent(int cycles)
+int SID::clockSilent(int cycles)
 {
     ageBusValue(cycles);
+    int s = 0;
 
     while (cycles != 0)
     {
@@ -384,6 +395,11 @@ void SID::clockSilent(int cycles)
 
             for (int i = 0; i < delta_t; i++)
             {
+                //TODO: use stub resampler
+                if (resampler->input(0))
+                {
+                    ++s;
+                }
                 /* clock waveform generators (can affect OSC3) */
                 voice[0]->wave()->clock();
                 voice[1]->wave()->clock();
@@ -408,6 +424,7 @@ void SID::clockSilent(int cycles)
             voiceSync(true);
         }
     }
+    return s;
 }
 
 } // namespace reSIDfp

@@ -23,7 +23,7 @@
 #define SYSTEMRAMBANK_H
 
 #include <stdint.h>
-#include <cstring>
+#include <algorithm>
 
 #include "Bank.h"
 
@@ -34,8 +34,6 @@
  */
 class SystemRAMBank : public Bank
 {
-    friend class MMU;
-
 private:
     /** C64 RAM area */
     uint8_t ram[0x10000];
@@ -44,21 +42,51 @@ public:
     /// Initialize RAM with powerup pattern
     void reset()
     {
-        memset(ram, 0, 0x10000);
+        fill(0, uint8_t(0), 0x10000);
         for (int i = 0x07c0; i < 0x10000; i += 128)
         {
-            memset(ram+i, 0xff, 64);
+            fill(i, 0xff, 64);
         }
     }
 
     uint8_t peek(uint_least16_t address)
     {
-        return ram[address];
+        return peekByte(address);
     }
 
     void poke(uint_least16_t address, uint8_t value)
     {
+        pokeByte(address, value);
+    }
+
+    inline uint8_t peekByte(uint_least16_t address)
+    {
+        return ram[address];
+    }
+
+    void pokeByte(uint_least16_t address, uint8_t value)
+    {
         ram[address] = value;
+    }
+
+    uint16_t peekWord(uint_least16_t addr)
+    {
+        return endian_little16(ram+addr);
+    }
+
+    void pokeWord(uint_least16_t addr, uint_least16_t value)
+    {
+        endian_little16(ram+addr, value);
+    }
+
+    void fill(uint_least16_t start, uint8_t value, unsigned int size)
+    {
+        std::fill_n(ram+start, size, value);
+    }
+
+    void fill(uint_least16_t start, const uint8_t* source, unsigned int size)
+    {
+        std::copy(source, source+size, ram+start);
     }
 };
 
