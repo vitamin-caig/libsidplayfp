@@ -37,15 +37,72 @@
 const char ERR_PSIDDRV_NO_SPACE[]  = "ERROR: No space to install psid driver in C64 ram";
 const char ERR_PSIDDRV_RELOC[]     = "ERROR: Failed whilst relocating psid driver";
 
-uint8_t psiddrv::psid_driver[] = {
+uint8_t psid_driver[] = {
 #  include "psiddrv.bin"
 };
 
-static const uint8_t POWERON[] =
+const uint8_t POWERON[] =
 {
-#include "poweron.bin"
+#  include "poweron.bin"
 };
 
+
+/**
+ * Copy power on pattern in memory.
+ */
+void copyPoweronPattern(sidmemory *mem)
+{
+    // Copy in power on settings. These were created by running
+    // the kernel reset routine and storing the useful values
+    // from $0000-$03ff. Format is:
+    // - offset byte (bit 7 indicates presence rle byte)
+    // - rle count byte (bit 7 indicates compression used)
+    // - data (single byte) or quantity represented by uncompressed count
+    // all counts and offsets are 1 less than they should be
+    uint_least16_t addr = 0;
+    for (unsigned int i = 0; i < sizeof(POWERON);)
+    {
+        uint8_t off   = POWERON[i++];
+        uint8_t count = 0;
+        bool compressed = false;
+
+        // Determine data count/compression
+        if (off & 0x80)
+        {
+            // fixup offset
+            off  &= 0x7f;
+            count = POWERON[i++];
+            if (count & 0x80)
+            {
+                // fixup count
+                count &= 0x7f;
+                compressed = true;
+            }
+        }
+
+        // Fix count off by ones (see format details)
+        count++;
+        addr += off;
+
+        // Extract compressed data
+        if (compressed)
+        {
+            const uint8_t data = POWERON[i++];
+            while (count-- > 0)
+            {
+                mem->writeMemByte(addr++, data);
+            }
+        }
+        // Extract uncompressed data
+        else
+        {
+            while (count-- > 0)
+            {
+                mem->writeMemByte(addr++, POWERON[i++]);
+            }
+        }
+    }
+}
 
 uint8_t psiddrv::iomap(uint_least16_t addr) const
 {
@@ -186,7 +243,7 @@ void psiddrv::install(sidmemory *mem, uint8_t video) const
 
     // Set init address
     mem->writeMemWord(pos, m_tuneInfo->compatibility() == SidTuneInfo::COMPATIBILITY_BASIC ?
-                     0xbf55 /*Was 0xa7ae, see above*/ : m_tuneInfo->initAddr());
+                     0xbf55 : m_tuneInfo->initAddr());
     pos += 2;
 
     // Set play address
@@ -224,60 +281,4 @@ void psiddrv::install(sidmemory *mem, uint8_t video) const
 
     // Set default processor register flags on calling init
     mem->writeMemByte(pos, m_tuneInfo->compatibility() >= SidTuneInfo::COMPATIBILITY_R64 ? 0 : 1 << MOS6510::SR_INTERRUPT);
-}
-
-void psiddrv::copyPoweronPattern(sidmemory *mem) const
-{
-    // Copy in power on settings. These were created by running
-    // the kernel reset routine and storing the useful values
-    // from $0000-$03ff. Format is:
-    // - offset byte (bit 7 indicates presence rle byte)
-    // - rle count byte (bit 7 indicates compression used)
-    // - data (single byte) or quantity represented by uncompressed count
-    // all counts and offsets are 1 less than they should be
-    {
-        uint_least16_t addr = 0;
-        for (unsigned int i = 0; i < sizeof(POWERON);)
-        {
-            uint8_t off   = POWERON[i++];
-            uint8_t count = 0;
-            bool compressed = false;
-
-            // Determine data count/compression
-            if (off & 0x80)
-            {
-                // fixup offset
-                off  &= 0x7f;
-                count = POWERON[i++];
-                if (count & 0x80)
-                {
-                    // fixup count
-                    count &= 0x7f;
-                    compressed = true;
-                }
-            }
-
-            // Fix count off by ones (see format details)
-            count++;
-            addr += off;
-
-            // Extract compressed data
-            if (compressed)
-            {
-                const uint8_t data = POWERON[i++];
-                while (count-- > 0)
-                {
-                    mem->writeMemByte(addr++, data);
-                }
-            }
-            // Extract uncompressed data
-            else
-            {
-                while (count-- > 0)
-                {
-                    mem->writeMemByte(addr++, POWERON[i++]);
-                }
-            }
-        }
-    }
 }

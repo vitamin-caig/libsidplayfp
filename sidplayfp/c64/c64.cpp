@@ -22,7 +22,9 @@
 
 #include "c64.h"
 
-#include "sidplayfp/c64/VIC_II/mos656x.h"
+#include <algorithm>
+
+#include "c64/VIC_II/mos656x.h"
 
 typedef struct
 {
@@ -46,7 +48,7 @@ const model_data_t modelData[] =
     {4433618.75,  18., 50., MOS656X::MOS6569},      // PAL-B
     {3579545.455, 14., 60., MOS656X::MOS6567R8},    // NTSC-M
     {3579545.455, 14., 60., MOS656X::MOS6567R56A},  // Old NTSC-M
-    {3582056.25,  14., 60., MOS656X::MOS6572},      // PAL-N
+    {3582056.25,  14., 50., MOS656X::MOS6572},      // PAL-N
 };
 
 double c64::getCpuFreq(model_t model)
@@ -100,13 +102,15 @@ void c64::reset()
 {
     m_scheduler.reset();
 
-    //cpu.reset  ();
+    //cpu.reset();
     cia1.reset();
     cia2.reset();
     vic.reset();
     sidBank.reset();
     colorRAMBank.reset();
     mmu.reset();
+
+    std::for_each(extraSidBanks.begin(), extraSidBanks.end(), resetSID());
 
     irqCount = 0;
     oldBAState = true;
@@ -122,38 +126,51 @@ void c64::setModel(model_t model)
     cia2.setDayOfTimeRate(rate);
 }
 
-void c64::setSid(unsigned int i, c64sid *s)
+void c64::setBaseSid(c64sid *s)
 {
-    switch (i)
-    {
-    case 0:
-        sidBank.setSID(s);
-        break;
-    case 1:
-        extraSidBank.setSID(s);
-        break;
-    default:
-        break;
-    }
+    sidBank.setSID(s);
 }
 
-void c64::setSecondSIDAddress(int sidChipBase2)
+bool c64::addExtraSid(c64sid *s, int address)
 {
+    // Check for valid address in the IO area range ($dxxx)
+    if ((address & 0xf000) != 0xd000)
+        return false;
+
+    const int idx = (address >> 8) & 0xf;
+
+    // Only allow second SID chip in SID area ($d400-$d7ff)
+    // or IO Area ($de00-$dfff)
+    if (idx < 0x4 || (idx > 0x7 && idx < 0xe))
+        return false;
+
+    //Add new SID bank
+    sidBankMap_t::iterator it = extraSidBanks.find(idx);
+    if (it != extraSidBanks.end())
+    {
+         ExtraSidBank *extraSidBank = it->second;
+         extraSidBank->addSID(s, address);
+    }
+    else
+    {
+        ExtraSidBank *extraSidBank = extraSidBanks.insert(it, sidBankMap_t::value_type(idx, new ExtraSidBank()))->second;
+        extraSidBank->resetSIDMapper(ioBank.getBank(idx));
+        ioBank.setBank(idx, extraSidBank);
+        extraSidBank->addSID(s, address);
+    }
+
+    return true;
+}
+
+void c64::clearSids()
+{
+    sidBank.setSID(0);
+
     resetIoBank();
 
-    // Check for valid address in the IO area range ($dxxx)
-    if (sidChipBase2 == 0 || ((sidChipBase2 & 0xf000) != 0xd000))
-        return;
-
-    const int idx = (sidChipBase2 >> 8) & 0xf;
-    /*
-    * Only allow second SID chip in SID area ($d400-$d7ff)
-    * or IO Area ($de00-$dfff)
-    */
-    if (idx < 0x4 || (idx > 0x7 && idx < 0xe))
-        return;
-
-    extraSidBank.resetSIDMapper(ioBank.getBank(idx));
-    ioBank.setBank(idx, &extraSidBank);
-    extraSidBank.setSIDMapping(sidChipBase2);
+    for(sidBankMap_t::const_iterator it = extraSidBanks.begin(); it != extraSidBanks.end(); ++it)
+    {
+        delete it->second;
+    }
+    extraSidBanks.clear();
 }

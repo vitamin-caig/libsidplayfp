@@ -36,6 +36,10 @@ class sidemu;
  */
 class Mixer
 {
+public:
+    /// Maximum number of supported SIDs (mono and stereo)
+    static const unsigned int MAX_SIDS = 2;
+
 private:
     typedef short (*mixer_func_t)(const int_least32_t* s);
 

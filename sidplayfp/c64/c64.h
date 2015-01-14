@@ -26,19 +26,21 @@
 #include <stdint.h>
 #include <cstdio>
 
+#include <map>
+
 #include "Banks/IOBank.h"
 #include "Banks/ColorRAMBank.h"
 #include "Banks/DisconnectedBusBank.h"
 #include "Banks/SidBank.h"
 #include "Banks/ExtraSidBank.h"
 
-#include "sidplayfp/EventScheduler.h"
+#include "EventScheduler.h"
 
-#include "sidplayfp/c64/c64env.h"
-#include "sidplayfp/c64/c64cpu.h"
-#include "sidplayfp/c64/c64cia.h"
-#include "sidplayfp/c64/c64vic.h"
-#include "sidplayfp/c64/mmu.h"
+#include "c64/c64env.h"
+#include "c64/c64cpu.h"
+#include "c64/c64cia.h"
+#include "c64/c64vic.h"
+#include "c64/mmu.h"
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -75,10 +77,6 @@ public:
 class c64: private c64env
 {
 public:
-    /// Maximum number of supported SIDs (mono and stereo)
-    static const unsigned int MAX_SIDS = 2;
-
-public:
     typedef enum
     {
         PAL_B = 0     ///< PAL C64
@@ -86,6 +84,15 @@ public:
         ,OLD_NTSC_M   ///< Old NTSC C64
         ,PAL_N        ///< C64 Drean
     } model_t;
+
+private:
+    typedef std::map<int, ExtraSidBank*> sidBankMap_t;
+
+    class resetSID
+    {
+    public:
+        void operator() (sidBankMap_t::value_type &e) { e.second->reset(); }
+    };
 
 private:
     /// System clock frequency
@@ -118,8 +125,8 @@ private:
     /// SID
     SidBank sidBank;
 
-    /// 2nd SID
-    ExtraSidBank extraSidBank;
+    /// Extra SIDs
+    sidBankMap_t extraSidBanks;
 
     /// I/O Area #1 and #2
     DisconnectedBusBank disconnectedBusBank;
@@ -180,7 +187,7 @@ private:
      */
     inline void setBA(bool state);
 
-    inline void lightpen() { vic.lightpen (); }
+    inline void lightpen(bool state);
 
 #ifdef PC64_TESTSUITE
     testEnv *m_env;
@@ -240,23 +247,27 @@ public:
     double getMainCpuSpeed() const { return m_cpuFreq; }
 
     /**
-     * Set the requested SID
+     * Set the base SID.
      *
-     * @param i sid number to set
-     * @param s the sid emu to set, or 0 to remove
+     * @param s the sid emu to set
      */
-    void setSid(unsigned int i, c64sid *s);
+    void setBaseSid(c64sid *s);
 
     /**
-     * Set the base address of a stereo SID chip.<br/>
-     * Valid addresses includes the SID area ($d400-$d7ff)
-     * and the IO Area ($de00-$dfff).
+     * Add an extra SID.
      *
-     * @param sidChipBase2
+     * @param s the sid emu to set
+     * @param sidAddress
      *            base address (e.g. 0xd420)
-     *            0 to remove second SID
+     *
+     * @return false if address is unsupported
      */
-    void setSecondSIDAddress(int sidChipBase2);
+    bool addExtraSid(c64sid *s, int address);
+
+    /**
+     * Remove all the SIDs.
+     */
+    void clearSids();
 
     /**
      * Get the components credits
@@ -299,6 +310,14 @@ void c64::setBA(bool state)
 
     // Signal changes in BA to interested parties
     cpu.setRDY (state);
+}
+
+void c64::lightpen(bool state)
+{
+    if (state)
+        vic.triggerLightpen();
+    else
+        vic.clearLightpen();
 }
 
 #endif // C64_H
